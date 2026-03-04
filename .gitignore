@@ -1,0 +1,15 @@
+# Python cache and environments
+__pycache__/
+*.pyc
+venv/
+env/
+
+# OS generated files
+.DS_Store
+
+# Log files and datasets
+*.csv
+*.sqlite3
+
+# API keys and secrets (if added later)
+.env
