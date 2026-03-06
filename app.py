@@ -93,22 +93,23 @@ int main() {
 }"""
     user_code = st.text_area("Write your C++ code here:", value=default_code, height=400)
     
-    if st.button("Compile & Analyze"):
+if st.button("Compile & Analyze"):
         if not user_code.strip():
             st.warning("Please write some code first!")
         else:
             is_safe, warning_msg = run_security_guardrail(user_code)
             
             if not is_safe:
-                # Stop everything immediately!
+                # Instantly halt execution and display the block on screen
                 st.session_state['compile_status'] = -1 
-                st.session_state['logs'] = f"🚫 SECURITY BLOCK: {warning_msg}"
                 st.session_state['user_code'] = user_code
-                st.rerun() # Refresh to show the error
+                st.error(f"🚫 SECURITY BLOCK: {warning_msg}")
+                st.stop() 
             
-            # Only compile if safe
+            # This will ONLY run if is_safe is True
             with st.spinner("Compiling..."):
                 return_code, stdout, stderr = compile_code(user_code)
+                
             # Store results
             st.session_state['compile_status'] = return_code
             st.session_state['output'] = stdout
