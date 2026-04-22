@@ -3,43 +3,51 @@ import os
 
 def compile_and_run(cpp_code):
     """
-    Takes C++ code string, saves it, compiles it, and returns the output or error.
+    Compiles with '-g' for LLDB support and runs the code.
+    Returns: (status_code, stdout, stderr)
+      0 = Success
+      1 = Compile Error
+      2 = Runtime Error (Segfault/Crash)
+     -1 = Timeout/System Error
     """
-    # We create these temporary files inside the current folder
     source_file = "temp_source.cpp"
-    executable = "temp_program"
+    executable = "./temp_program"
 
-    # 1. Write the C++ code to a file
     with open(source_file, "w") as f:
         f.write(cpp_code)
 
     try:
-        # 2. Run the Compiler (g++)
-        # Command: g++ temp_source.cpp -o temp_program
-        process = subprocess.run(
-            ["g++", source_file, "-o", executable], 
-            capture_output=True,
-            text=True
+        # 1. COMPILE (Now with -g for debug symbols!)
+        compile_process = subprocess.run(
+            ["g++", "-g", source_file, "-o", executable.strip("./")], 
+            capture_output=True, 
+            text=True, 
+            timeout=10
         )
 
-        # 3. Check for Errors
-        if process.returncode != 0:
-            return f"Compilation Error:\n{process.stderr}"
-        else:
-            return "✅ Compilation Successful! (Binary generated)"
+        if compile_process.returncode != 0:
+            return 1, "", compile_process.stderr
 
+        # 2. RUN BINARY
+        run_process = subprocess.run(
+            [executable], 
+            capture_output=True, 
+            text=True, 
+            timeout=5
+        )
+        # 3. CATCH RUNTIME CRASHES (Like SegFaults)
+        if run_process.returncode < 0:
+            # On Mac, SegFaults sometimes just return a negative exit code
+            crash_reason = run_process.stderr if run_process.stderr else f"Process crashed with exit code {run_process.returncode} (Likely Segmentation Fault)"
+            return 2, run_process.stdout, crash_reason
+        # 4. GRACEFUL EXITS (e.g., return 0, or user-defined return 1)
+        # We combine stdout and stderr so the user can see their custom std::cerr messages!
+        full_output = run_process.stdout
+        if run_process.stderr:
+            full_output += "\n" + run_process.stderr
+            
+        return 0, full_output.strip(), ""
+    except subprocess.TimeoutExpired:
+        return -1, "", "❌ Time Limit Exceeded! Possible infinite loop."
     except Exception as e:
-        return f"System Error: {str(e)}"
-
-# Test
-if __name__ == "__main__":
-    # This code is missing a semicolon on purpose to test the error catcher
-    broken_code = """
-    #include <iostream>
-    using namespace std;
-    int main() {
-        cout << "Hello World"
-        return 0;
-    }
-    """
-    print(compile_and_run(broken_code))
+        return -1, "", f"❌ System Error: {str(e)}"

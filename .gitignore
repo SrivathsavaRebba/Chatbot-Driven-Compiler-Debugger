@@ -1,15 +1,14 @@
-# Python cache and environments
-__pycache__/
-*.pyc
-venv/
-env/
+# Ignore Zip files and redundant folders
+*.zip
+24CSB0A58_CD_Final_Codes/
 
-# OS generated files
-.DS_Store
+# Mac & Compiler Artifacts
+*.dSYM/
+*.bin
+temp_program
+temp_source.cpp
+debug_target.cpp
 
-# Log files and datasets
-*.csv
-*.sqlite3
-
-# API keys and secrets (if added later)
-.env
+# Logs and Data
+powermetrics_log.txt
+system_interactions.jsongithub_scraper.py
